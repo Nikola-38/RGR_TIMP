@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Активные устройства в сети</title>
+</head>
+<body>
+    <h1>Активные устройства в сети</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>IP-адрес</th>
+                <th>Открытые порты</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set port_names = {
+                7: 'Echo',
+                20: 'FTP-data',
+                21: 'FTP',
+                22: 'SSH-SCP',
+                23: 'Telnet',
+                25: 'SMTP',
+                53: 'DNS',
+                69: 'TFTP',
+                80: 'HTTP',
+                88: 'Kerberos',
+                102: 'Iso-tsap',
+                110: 'POP3',
+                135: 'Microsoft EPMAP',
+                137: 'NetBIOS-ns',
+                139: 'NetBIOS-ssn',
+                143: 'IMAP4',
+                381: 'HP Openview',
+                383: 'HP Openview',
+                443: 'HTTP over SSL',
+                464: 'Kerberos',
+                465: 'SMTP over TLS/SSL, SSM',
+                587: 'SMTP',
+                593: 'Microsoft DCOM',
+                636: 'LDAP over TLS/SSL',
+                691: 'MS Exchange',
+                902: 'VMware Server',
+                989: 'FTP over SSL',
+                990: 'FTP over SSL',
+                993: 'IMAP4 over SSL',
+                995: 'POP3 over SSL',
+                1025: 'Microsoft RPC',
+                1194: 'OpenVPN',
+                1337: 'WASTE',
+                1589: 'Cisco VQP',
+                1725: 'Steam',
+                2082: 'cPanel',
+                2083: 'radsec, cPanel',
+                2483: 'Oracle DB',
+                2484: 'Oracle DB',
+                2967: 'Symantec AV',
+                3074: 'XBOX Live',
+                3306: 'MySQL',
+                3724: 'World of Warcraft',
+                4664: 'Google Desktop',
+                5432: 'PostgreSQL',
+                5900: 'RFB/VNC Server',
+                6665: 'IRC',
+                6666: 'IRC',
+                6667: 'IRC',
+                6668: 'IRC',
+                6669: 'IRC',
+                6881: 'BitTorrent',
+                6999: 'BitTorrent',
+                6970: 'Quicktime',
+                8086: 'Kaspersky AV',
+                8087: 'Kaspersky AV',
+                8222: 'VMware Server',
+                9100: 'PDL',
+                10000: 'BackupExec',
+                12345: 'NetBus',
+                27374: 'Sub7',
+                31337: 'Back Orifice'
+            } %}
+            
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.ip }}</td>
+                <td>
+                    {% if device.status == "Доступен" %}
+                        {% if device.ports and device.ports|length > 0 %}
+                            {% for port in device.ports %}
+                                <span>{{ port }} — {{ port_names.get(port, 'Неизвестный сервис') }}</span>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            Нет открытых портов
+                        {% endif %}
+                    {% else %}
+                        Недоступен
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2">Нет активных устройств</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="/">Назад на главную</a>
+    <a href="/scan_network" class="retry-button">Повторить проверку</a>
+</body>
+</html>
