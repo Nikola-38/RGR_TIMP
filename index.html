@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Сканирование безопасности</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 15px;
+            background: #fafafa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column; /* Вертикальное расположение */
+            gap: 1rem; /* Отступ между элементами */
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            border: none;
+            color: white;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        .scan-network-link a {
+            display: inline-block;
+            background: #4a90e2;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .scan-network-link a:hover {
+            background-color: #357abd;
+        }
+
+        .results {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .results-section {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1 1 600px;
+            max-width: 600px;
+            min-width: 320px;
+            word-wrap: break-word;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .port {
+            font-weight: 700;
+            color: #2a62bc;
+            margin-right: 8px;
+            display: inline-block;
+        }
+
+        .ip-info {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 1rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Стиль для flash-сообщения */
+        .flash-message {
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 1rem;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background-color: #e4ffdd;
+            color: rgb(55, 170, 51);
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(9, 255, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Блок для flash-сообщений -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-message">
+          {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <h1>Проверка сетевой безопасности</h1>
+
+    <div class="form-section">
+        <form method="POST" action="/scan">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="ip_address">Введите IP-адрес:</label>
+            <input type="text" id="ip_address" name="ip_address" required />
+            <button type="submit">Сканировать</button>
+        </form>
+        
+        
+        <div class="scan-network-link">
+            <a href="/scan_network">Сканировать всю сеть</a>
+        </div>
+    </div>
+
+    {% if scanned_ip %}
+    <div class="ip-info">
+        Сканирование было выполнено для IP: <strong>{{ scanned_ip }}</strong>
+    </div>
+    {% endif %}
+
+    <div class="results">
+        {% if open_ports %}
+        <div class="results-section">
+            <h2>Открытые порты</h2>
+            <ul>
+                {% for port in open_ports %}
+                <li>
+                    <span class="port">{{ port }}</span>
+                    <span>
+                        {{
+                            {
+                                7: 'Echo',
+                                20: 'FTP-data',
+                                21: 'FTP',
+                                22: 'SSH-SCP',
+                                23: 'Telnet',
+                                25: 'SMTP',
+                                53: 'DNS',
+                                69: 'TFTP',
+                                80: 'HTTP',
+                                88: 'Kerberos',
+                                102: 'Iso-tsap',
+                                110: 'POP3',
+                                135: 'Microsoft EPMAP',
+                                137: 'NetBIOS-ns',
+                                139: 'NetBIOS-ssn',
+                                143: 'IMAP4',
+                                381: 'HP Openview',
+                                383: 'HP Openview',
+                                443: 'HTTP over SSL',
+                                464: 'Kerberos',
+                                465: 'SMTP over TLS/SSL, SSM',
+                                587: 'SMTP',
+                                593: 'Microsoft DCOM',
+                                636: 'LDAP over TLS/SSL',
+                                691: 'MS Exchange',
+                                902: 'VMware Server',
+                                989: 'FTP over SSL',
+                                990: 'FTP over SSL',
+                                993: 'IMAP4 over SSL',
+                                995: 'POP3 over SSL',
+                                1025: 'Microsoft RPC',
+                                1194: 'OpenVPN',
+                                1337: 'WASTE',
+                                1589: 'Cisco VQP',
+                                1725: 'Steam',
+                                2082: 'cPanel',
+                                2083: 'radsec, cPanel',
+                                2483: 'Oracle DB',
+                                2484: 'Oracle DB',
+                                2967: 'Symantec AV',
+                                3074: 'XBOX Live',
+                                3306: 'MySQL',
+                                3724: 'World of Warcraft',
+                                4664: 'Google Desktop',
+                                5432: 'PostgreSQL',
+                                5900: 'RFB/VNC Server',
+                                6665: 'IRC',
+                                6666: 'IRC',
+                                6667: 'IRC',
+                                6668: 'IRC',
+                                6669: 'IRC',
+                                6881: 'BitTorrent',
+                                6999: 'BitTorrent',
+                                6970: 'Quicktime',
+                                8086: 'Kaspersky AV',
+                                8087: 'Kaspersky AV',
+                                8222: 'VMware Server',
+                                9100: 'PDL',
+                                10000: 'BackupExec',
+                                12345: 'NetBus',
+                                27374: 'Sub7',
+                                31337: 'Back Orifice'
+                            }.get(port, 'Неизвестный сервис')
+                        }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if vulnerabilities %}
+        <div class="results-section">
+            <h2>Обнаруженные уязвимости</h2>
+            <ul>
+                {% for port, message in vulnerabilities.items() %}
+                <li><span class="port">Порт {{ port }}:</span> {{ message }}</li>
+                {% endfor %}
+</ul>
+</div>
+{% endif %}
+</div>
+</body> </html> 
